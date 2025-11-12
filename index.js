@@ -31,6 +31,7 @@ async function run() {
     await client.connect();
     const db = client.db("krishi_db");
     const cropsCollection = db.collection("all_crops");
+    const usersCollection = db.collection("users");
     
     app.post("/allCrops", async (req, res) => {
       const newCrop = req.body;
@@ -38,8 +39,31 @@ async function run() {
       res.send(result);
     });
 
-    
-    
+    app.post("/users", async (req, res) => {
+      const newUser = req.body;
+      const email = req.body.email;
+      const query = { email: email };
+      const existingUser = usersCollection.findOne(query);
+     const result = await usersCollection.insertOne(newUser);
+     res.send(result);
+      if (existingUser) {
+        res.send("user already available");
+        console.log(existingUser)
+      } else {
+   
+      }
+ 
+    });
+    app.get("/latestProducts", async (req, res) => {
+      const cursor = cropsCollection
+        .find()
+        .sort({
+          addTime: -1,
+        })
+        .limit(6);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
