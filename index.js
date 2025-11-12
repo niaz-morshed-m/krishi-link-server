@@ -33,7 +33,7 @@ async function run() {
     const cropsCollection = db.collection("all_crops");
     const usersCollection = db.collection("users");
     
-    app.post("/allCrops", async (req, res) => {
+    app.post("/crop", async (req, res) => {
       const newCrop = req.body;
       const result = await cropsCollection.insertOne(newCrop);
       res.send(result);
@@ -43,18 +43,18 @@ async function run() {
       const newUser = req.body;
       const email = req.body.email;
       const query = { email: email };
-      const existingUser = usersCollection.findOne(query);
-     const result = await usersCollection.insertOne(newUser);
-     res.send(result);
+      const existingUser = await usersCollection.findOne(query);
+    
       if (existingUser) {
         res.send("user already available");
-        console.log(existingUser)
+        console.log(newUser);
       } else {
-   
+         const result = await usersCollection.insertOne(newUser);
+      res.send(result);
       }
  
     });
-    app.get("/crops/latest", async (req, res) => {
+    app.get("/crop/latest", async (req, res) => {
       const cursor = cropsCollection
         .find()
         .sort({
@@ -65,14 +65,31 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/crops/all", async (req, res) => {
+    app.get("/crop/all", async (req, res) => {
       const cursor = cropsCollection
         .find()
       const result = await cursor.toArray();
       res.send(result);
     });
 
-    
+    app.get("/crop/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: id };
+      const result = await cropsCollection.findOne(query);
+      res.send(result);
+    });
+
+app.patch("/crop/:id", async (req, res) => {
+  const id = req.params.id;
+  const updatedCrop = req.body;
+  const query = { _id: new ObjectId(id) };
+  const update = {
+    $set: { name: updatedCrop.name, price: updatedCrop.price },
+  };
+  const options = {};
+  cropsCollection.updateOne(query, update, options);
+});
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
