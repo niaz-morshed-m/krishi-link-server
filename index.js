@@ -39,6 +39,20 @@ async function run() {
       res.send(result);
     });
 
+app.delete("/crop/delete/:id", async (req, res) => {
+  const id = req.params.id;
+let query;
+if (ObjectId.isValid(id)) {
+  query = {
+    $or: [{ _id: new ObjectId(id) }, { _id: id }],
+  };
+} else {
+  query = { _id: id };
+}
+  const result = await cropsCollection.deleteOne(query);
+  res.send(result);
+});
+
     app.post("/users", async (req, res) => {
       const newUser = req.body;
       const email = req.body.email;
@@ -86,6 +100,17 @@ async function run() {
       res.send(result);
     });
 
+app.patch("/user/:email", async (req, res) => {
+  const email = req.params.email;
+  const updatedUser = req.body;
+  const query = { email: email};
+  const update = {
+    $set: { name: updatedUser.name, image: updatedUser.photoUrl },
+  };
+  const options = {};
+ usersCollection.updateOne(query, update, options);
+});
+
 app.patch("/crop/:id", async (req, res) => {
   const id = req.params.id;
   const updatedCrop = req.body;
@@ -122,8 +147,8 @@ app.get("/interests/:email", async (req, res) => {
       .db("krishi_db")
       .collection("all_crops")
       .aggregate([
-        { $unwind: "$interests" }, // break interests array into individual docs
-        { $match: { "interests.userEmail": email } }, // filter by email
+        { $unwind: "$interests" }, 
+        { $match: { "interests.userEmail": email } }, 
         {
           $project: {
             _id: 0,
@@ -141,10 +166,10 @@ app.get("/interests/:email", async (req, res) => {
 });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
  
