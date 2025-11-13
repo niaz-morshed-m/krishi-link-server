@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 3000;
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = process.env.MONGO_URI;
 
 app.use(cors());
@@ -72,9 +72,16 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/crop/:id", async (req, res) => {
+    app.get("/crop/details/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: id };
+    let query;
+    if (ObjectId.isValid(id)) {
+      query = {
+        $or: [{ _id: new ObjectId(id) }, { _id: id }],
+      };
+    } else {
+      query = { _id: id };
+    }
       const result = await cropsCollection.findOne(query);
       res.send(result);
     });
@@ -84,10 +91,28 @@ app.patch("/crop/:id", async (req, res) => {
   const updatedCrop = req.body;
   const query = { _id: new ObjectId(id) };
   const update = {
-    $set: { name: updatedCrop.name, price: updatedCrop.price },
+    $set: { name: updatedCrop.name, type: updatedCrop.type , 
+pricePerUnit: updatedCrop.pricePerUnit, unit: updatedCrop.unit , quantity: updatedCrop.quantity, description: updatedCrop.description , location:  updatedCrop.location , image: updatedCrop.image, },
   };
   const options = {};
   cropsCollection.updateOne(query, update, options);
+});
+
+app.patch("/crop/addInterest/:id/", async (req, res) => {
+  const id = req.params.id;
+  const newInterest = req.body; 
+  console.log(newInterest)
+  let query;
+  if (ObjectId.isValid(id)) {
+    query = { _id: new ObjectId(id) };
+  } else {
+    query = { _id: id };
+  }
+
+  const update = { $push: { interests: newInterest } };
+
+  const result = await cropsCollection.updateOne(query, update);
+  res.send(result);
 });
 
     // Send a ping to confirm a successful connection
