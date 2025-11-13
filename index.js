@@ -115,6 +115,31 @@ app.patch("/crop/addInterest/:id/", async (req, res) => {
   res.send(result);
 });
 
+app.get("/interests/:email", async (req, res) => {
+    const email = req.params.email;
+
+    const result = await client
+      .db("krishi_db")
+      .collection("all_crops")
+      .aggregate([
+        { $unwind: "$interests" }, // break interests array into individual docs
+        { $match: { "interests.userEmail": email } }, // filter by email
+        {
+          $project: {
+            _id: 0,
+            cropId: "$_id",
+            cropName: "$name",
+            location: 1,
+            interest: "$interests",
+          },
+        },
+      ])
+      .toArray();
+
+    res.send(result);
+ 
+});
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
