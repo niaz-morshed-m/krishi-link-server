@@ -28,7 +28,7 @@ app.listen(port, () => {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     const db = client.db("krishi_db");
     const cropsCollection = db.collection("all_crops");
     const usersCollection = db.collection("users");
@@ -147,13 +147,14 @@ app.get("/interests/:email", async (req, res) => {
       .db("krishi_db")
       .collection("all_crops")
       .aggregate([
-        { $unwind: "$interests" }, 
-        { $match: { "interests.userEmail": email } }, 
+        { $unwind: "$interests" },
+        { $match: { "interests.userEmail": email } },
         {
           $project: {
             _id: 0,
             cropId: "$_id",
             cropName: "$name",
+            ownerInfo: "$owner",
             location: 1,
             interest: "$interests",
           },
@@ -167,9 +168,9 @@ app.get("/interests/:email", async (req, res) => {
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
-    // console.log(
-    //   "Pinged your deployment. You successfully connected to MongoDB!"
-    // );
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
  
