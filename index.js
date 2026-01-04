@@ -31,6 +31,8 @@ async function run() {
     const db = client.db("krishi_db");
     const cropsCollection = db.collection("all_crops");
     const usersCollection = db.collection("users");
+    const interestsCollection = db.collection("interests");
+    
     
     app.post("/crop", async (req, res) => {
       const newCrop = req.body;
@@ -122,48 +124,51 @@ pricePerUnit: updatedCrop.pricePerUnit, unit: updatedCrop.unit , quantity: updat
   cropsCollection.updateOne(query, update, options);
 });
 
-app.patch("/crop/addInterest/:id/", async (req, res) => {
-  const id = req.params.id;
-  const newInterest = req.body; 
-  console.log(newInterest)
-  let query;
-  if (ObjectId.isValid(id)) {
-    query = { _id: new ObjectId(id) };
-  } else {
-    query = { _id: id };
-  }
-
-  const update = { $push: { interests: newInterest } };
-
-  const result = await cropsCollection.updateOne(query, update);
-  res.send(result);
+app.post("/crop/addInterest", async (req, res) => {
+   const newInterest = req.body;
+   const result = await interestsCollection.insertOne(newInterest);
+   res.send(result);
 });
 
 app.get("/interests/:email", async (req, res) => {
     const email = req.params.email;
-
-    const result = await client
-      .db("krishi_db")
-      .collection("all_crops")
-      .aggregate([
-        { $unwind: "$interests" },
-        { $match: { "interests.userEmail": email } },
-        {
-          $project: {
-            _id: 0,
-            cropId: "$_id",
-            cropName: "$name",
-            ownerInfo: "$owner",
-            location: 1,
-            interest: "$interests",
-          },
-        },
-      ])
-      .toArray();
-
+console.log(email)
+    const query = {
+      ownerEmail: email
+    }
+  const cursor = interestsCollection.find(query)
+const result = await cursor.toArray();
+console.log(result)
     res.send(result);
  
 });
+app.get("/myInterests/:email", async (req, res) => {
+    const email = req.params.email;
+console.log(email)
+    const query = {
+      userEmail: email
+    }
+  const cursor = interestsCollection.find(query)
+const result = await cursor.toArray();
+console.log(result)
+    res.send(result);
+ 
+});
+
+app.patch("/interest/status/:id", async (req, res) => {
+  const id = req.params.id;
+  const { status } = req.body; // "accepted" or "rejected"
+
+  const query = { _id: new ObjectId(id) };
+  const update = {
+    $set: { status: status },
+  };
+
+  const result = await interestsCollection.updateOne(query, update);
+  res.send(result);
+});
+
+
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
